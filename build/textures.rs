@@ -489,7 +489,7 @@ fn build_texture<W: Write>(dest: &mut W, ty: TextureType, dimensions: TextureDim
 
     // `ToXXXAttachment` trait impl
     if dimensions == TextureDimensions::Texture2d || dimensions == TextureDimensions::Texture2dMultisample ||
-       dimensions == TextureDimensions::Texture1d
+       dimensions == TextureDimensions::Texture1d || dimensions == TextureDimensions::Cubemap
     {
         match ty {
             TextureType::Regular | TextureType::Srgb | TextureType::Integral | TextureType::Unsigned => {

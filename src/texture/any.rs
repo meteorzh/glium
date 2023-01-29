@@ -343,8 +343,15 @@ pub fn new_texture<'a, F: ?Sized, P>(facade: &F, format: TextureFormatRequest,
                 ctxt.gl.CompressedTexImage2D(bind_point, 0, teximg_internal_format as u32,
                                    width, height, 0, data_bufsize as i32, data_raw);
             } else {
-                ctxt.gl.TexImage2D(bind_point, 0, teximg_internal_format as i32, width,
-                                   height, 0, client_format as u32, client_type, data_raw);
+                if bind_point == gl::TEXTURE_CUBE_MAP {
+                    for i in [0..6] {
+                        ctxt.gl.TexImage2D(gl::TEXTURE_CUBE_MAP_POSITIVE_X + gl::ONE, 0, teximg_internal_format as i32, width,
+                            height, 0, client_format as u32, client_type, data_raw);
+                    }
+                } else {
+                    ctxt.gl.TexImage2D(bind_point, 0, teximg_internal_format as i32, width,
+                        height, 0, client_format as u32, client_type, data_raw);
+                }
             }
 
         } else if bind_point == gl::TEXTURE_2D_MULTISAMPLE {
@@ -1507,7 +1514,7 @@ impl<'a> TextureAnyLayerMipmap<'a> {
         match (self.texture.ty, cube_layer) {
             (Dimensions::Cubemap { .. }, Some(_)) => (),
             (Dimensions::CubemapArray { .. }, Some(_)) => (),
-            (Dimensions::Cubemap { .. }, None) => return None,
+            (Dimensions::Cubemap { .. }, None) => (),
             (Dimensions::CubemapArray { .. }, None) => return None,
             (_, Some(_)) => return None,
             _ => ()

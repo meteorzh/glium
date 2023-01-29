@@ -1223,6 +1223,9 @@ pub unsafe fn bind_framebuffer(ctxt: &mut CommandContext<'_>, fbo_id: gl::types:
             }
         }
 
+        if !draw && !read {
+            ctxt.gl.BindFramebuffer(gl::FRAMEBUFFER, fbo_id);
+        }
     }
 }
 
@@ -1420,31 +1423,36 @@ unsafe fn attach(ctxt: &mut CommandContext<'_>, slot: gl::types::GLenum,
 
                 // non-layered cubemaps
                 gl::TEXTURE_CUBE_MAP if layer.is_some() => {
-                    let bind_point = gl::TEXTURE_CUBE_MAP_POSITIVE_X +
-                                    cubemap_layer.unwrap().get_layer_index() as gl::types::GLenum;
+                    if cubemap_layer.is_none() {
+                        bind_framebuffer(ctxt, id, false, false);
+                        ctxt.gl.FramebufferTexture(gl::FRAMEBUFFER, slot, tex_id, level as gl::types::GLint);
+                    } else {
+                        let bind_point = gl::TEXTURE_CUBE_MAP_POSITIVE_X +
+                        cubemap_layer.unwrap().get_layer_index() as gl::types::GLenum;
 
-                    if ctxt.version >= &Version(Api::Gl, 3, 0) ||
-                              ctxt.extensions.gl_arb_framebuffer_object
-                    {
-                        bind_framebuffer(ctxt, id, true, false);
-                        ctxt.gl.FramebufferTexture2D(gl::DRAW_FRAMEBUFFER,
-                                                     slot, bind_point, tex_id,
-                                                     level as gl::types::GLint);
-
-                    } else if ctxt.version >= &Version(Api::GlEs, 2, 0) {
-                        bind_framebuffer(ctxt, id, true, true);
-                        ctxt.gl.FramebufferTexture2D(gl::FRAMEBUFFER, slot, bind_point, tex_id,
-                                                     level as gl::types::GLint);
-
-                    } else if ctxt.extensions.gl_ext_framebuffer_object {
-                        bind_framebuffer(ctxt, id, true, true);
-                        ctxt.gl.FramebufferTexture2DEXT(gl::FRAMEBUFFER_EXT,
+                        if ctxt.version >= &Version(Api::Gl, 3, 0) ||
+                                ctxt.extensions.gl_arb_framebuffer_object
+                        {
+                            bind_framebuffer(ctxt, id, true, false);
+                            ctxt.gl.FramebufferTexture2D(gl::DRAW_FRAMEBUFFER,
                                                         slot, bind_point, tex_id,
                                                         level as gl::types::GLint);
 
-                    } else {
-                        // it's not possible to create an OpenGL context that doesn't support FBOs
-                        unreachable!();
+                        } else if ctxt.version >= &Version(Api::GlEs, 2, 0) {
+                            bind_framebuffer(ctxt, id, true, true);
+                            ctxt.gl.FramebufferTexture2D(gl::FRAMEBUFFER, slot, bind_point, tex_id,
+                                                        level as gl::types::GLint);
+
+                        } else if ctxt.extensions.gl_ext_framebuffer_object {
+                            bind_framebuffer(ctxt, id, true, true);
+                            ctxt.gl.FramebufferTexture2DEXT(gl::FRAMEBUFFER_EXT,
+                                                            slot, bind_point, tex_id,
+                                                            level as gl::types::GLint);
+
+                        } else {
+                            // it's not possible to create an OpenGL context that doesn't support FBOs
+                            unreachable!();
+                        }
                     }
                 },
 

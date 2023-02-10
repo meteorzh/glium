@@ -605,7 +605,7 @@ impl<'a> Surface for MultiOutputFrameBuffer<'a> {
 impl<'a> FboAttachments for MultiOutputFrameBuffer<'a> {
     #[inline]
     fn get_attachments(&self) -> Option<&fbo::ValidatedAttachments<'_>> {
-        unimplemented!();
+        Some(&self.example_attachments)
     }
 }
 
